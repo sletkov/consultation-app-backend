@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:alpine
+    environment:
+      - POSTGRES_USER=sletkov
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=consultationAppDB
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - postgres-db:/var/lib/postgresql/data
+  http-server:
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    build: .
+    volumes:
+      - .:/usr/src/app
+
+volumes:
+  postgres-db:
