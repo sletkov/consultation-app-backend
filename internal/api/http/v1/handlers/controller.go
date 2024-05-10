@@ -21,7 +21,10 @@ type ConsultationService interface {
 	GetConsultationByID(ctx context.Context, consultationID string) (*models.Consultation, error)
 	GetStudentConsultations(ctx context.Context, studentID string) ([]*models.Consultation, error)
 	GetTeacherConsultations(ctx context.Context, teacherID string) ([]*models.Consultation, error)
-	SignupConsultation(ctx context.Context, studentID, consultationID string) error
+	SignupConsultation(ctx context.Context, student *models.User, consultationID string) error
+	DeleteConsultation(ctx context.Context, consultationID string) error
+	UpdateConsultation(ctx context.Context, consultation *models.Consultation, consultationID string) error
+	GetStudentsByConsultationID(ctx context.Context, consultationID string) ([]*models.User, error)
 }
 
 type Controller struct {
@@ -47,13 +50,18 @@ func (c *Controller) InitRoutes() *mux.Router {
 
 	private := r.PathPrefix("/private").Subrouter()
 	private.Use(c.AuthenticateUser)
-	private.HandleFunc("/whoami", c.Whoami).Methods(http.MethodGet)
+
 	private.HandleFunc("/consultations", c.CreateConsultation).Methods(http.MethodPost)
 	private.HandleFunc("/consultations", c.GetConsultations).Methods(http.MethodGet)
+
 	private.HandleFunc("/consultations/{id}", c.GetConsultationByID).Methods(http.MethodGet)
+	private.HandleFunc("/consultations/{id}/students", c.GetStudentsByConsultationID).Methods(http.MethodGet)
+
 	private.HandleFunc("/consultations/student/{id}", c.GetStudentConsultations).Methods(http.MethodGet)
 	private.HandleFunc("/consultations/teacher/{id}", c.GetTeacherConsultations).Methods(http.MethodGet)
 	private.HandleFunc("/consultations/signup", c.SignupConsultation).Methods(http.MethodPost)
+	private.HandleFunc("/consultations/delete/{id}", c.DeleteConsultation).Methods(http.MethodPost)
+	private.HandleFunc("/consultations/update/{id}", c.UpdateConsultation).Methods(http.MethodPost)
 
 	private.HandleFunc("/users/{id}", c.GetUserByID).Methods(http.MethodGet)
 	return r

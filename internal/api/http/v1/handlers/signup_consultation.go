@@ -17,7 +17,29 @@ func (c *Controller) SignupConsultation(w http.ResponseWriter, r *http.Request) 
 
 	fmt.Println("req:", req)
 
-	err = c.consultationService.SignupConsultation(r.Context(), req.StudentID, req.ConsultationID)
+	cons, err := c.consultationService.GetConsultationByID(r.Context(), req.ConsultationID)
+	if err != nil {
+		slog.Log(r.Context(), slog.LevelError, "consultation wasn't found", err)
+		utils.ErrRespond(w, r, http.StatusInternalServerError, err)
+
+		return
+	}
+
+	if cons.StudentsCount >= cons.Limit {
+		slog.Log(r.Context(), slog.LevelError, "signup limit exceeded", err)
+		utils.ErrRespond(w, r, http.StatusBadRequest, err)
+
+		return
+	}
+	student, err := c.userService.GetUserByID(r.Context(), req.StudentID)
+	if err != nil {
+		slog.Log(r.Context(), slog.LevelError, "cannot find student", err)
+		utils.ErrRespond(w, r, http.StatusBadRequest, err)
+
+		return
+	}
+
+	err = c.consultationService.SignupConsultation(r.Context(), student, req.ConsultationID)
 
 	if err != nil {
 		slog.Log(r.Context(), slog.LevelError, "failed signup on consultation", err)

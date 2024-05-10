@@ -13,9 +13,11 @@ type ConsultationRepository interface {
 	GetStudentConsultationsIDs(ctx context.Context, studentID string) ([]string, error)
 	GetTeacherConsultationsIDs(ctx context.Context, teacherID string) ([]string, error)
 	GetUserConsultations(ctx context.Context, consultationIDs []string) ([]*models.Consultation, error)
-	SignupConsultation(ctx context.Context, studentID, consultationID string) error
+	SignupConsultation(ctx context.Context, student *models.User, consultation *models.Consultation) error
 	AddTeacherConsultation(ctx context.Context, teacherID, consultationID string) error
-	//UpdateConsultation(ctx context.Context, consultation *models.Consultation, consultationID string) error
+	DeleteConsultation(ctx context.Context, consultationID string) error
+	UpdateConsultation(ctx context.Context, consultation *models.Consultation, consultationID string) error
+	GetStudentsByConsultationID(ctx context.Context, consultationID string) ([]*models.User, error)
 }
 
 type ConsultationService struct {
@@ -70,6 +72,23 @@ func (service *ConsultationService) GetTeacherConsultations(ctx context.Context,
 	return service.consultationRepository.GetUserConsultations(ctx, consultationIDs)
 }
 
-func (service *ConsultationService) SignupConsultation(ctx context.Context, studentID, consultationID string) error {
-	return service.consultationRepository.SignupConsultation(ctx, studentID, consultationID)
+func (service *ConsultationService) SignupConsultation(ctx context.Context, student *models.User, consultationID string) error {
+	consultation, err := service.consultationRepository.GetConsultationByID(ctx, consultationID)
+	if err != nil {
+		return err
+	}
+
+	return service.consultationRepository.SignupConsultation(ctx, student, consultation)
+}
+
+func (service *ConsultationService) DeleteConsultation(ctx context.Context, consultationID string) error {
+	return service.consultationRepository.DeleteConsultation(ctx, consultationID)
+}
+
+func (service *ConsultationService) UpdateConsultation(ctx context.Context, consultation *models.Consultation, consultationID string) error {
+	return service.consultationRepository.UpdateConsultation(ctx, consultation, consultationID)
+}
+
+func (service *ConsultationService) GetStudentsByConsultationID(ctx context.Context, consultationID string) ([]*models.User, error) {
+	return service.consultationRepository.GetStudentsByConsultationID(ctx, consultationID)
 }

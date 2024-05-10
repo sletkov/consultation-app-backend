@@ -14,6 +14,7 @@ type CreateConsultationRequest struct {
 	Format        string `json:"format"`
 	Type          string `json:"type"`
 	TeacherID     string `json:"teacher_id"`
+	TeacherName   string `json:"teacher_name"`
 	Date          string `json:"date"`
 	Time          string `json:"time"`
 	Campus        string `json:"campus"`
@@ -21,6 +22,7 @@ type CreateConsultationRequest struct {
 	Link          string `json:"link,omitempty"`
 	Limit         int    `json:"limit,omitempty"`
 	StudentsCount int    `json:"students_count ,omitempty"`
+	Draft         bool   `json:"draft""`
 }
 
 func NewCreateConsultationRequest(r *http.Request) (*CreateConsultationRequest, error) {

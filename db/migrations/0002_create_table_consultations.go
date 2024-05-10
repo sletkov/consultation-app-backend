@@ -25,7 +25,8 @@ func upCreateTableConsultations(ctx context.Context, tx *sql.Tx) error {
 			students_limit integer,
 			students_count integer,
 			link varchar,
-			consultation_time varchar
+			consultation_time varchar,
+			teacher_id varchar not null
 		);	
 	`
 	_, err := tx.Exec(query)
