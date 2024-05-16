@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
@@ -8,6 +9,9 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
+	"os/signal"
+	"syscall"
+	"time"
 
 	_ "github.com/sletkov/consultation-app-backend/db/migrations"
 	"github.com/sletkov/consultation-app-backend/internal/api/http/v1/handlers"
@@ -64,7 +68,31 @@ func main() {
 	controller := handlers.NewV1Controller(userService, consultationsService, sessionStore)
 	router := controller.InitRoutes()
 
-	if err := http.ListenAndServe(net.JoinHostPort(cfg.Host, cfg.Port), router); err != nil {
-		log.Fatal("Cannot start server", err)
+	httpSrv := &http.Server{
+		Addr:         net.JoinHostPort(cfg.Host, cfg.Port),
+		Handler:      router,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
+		IdleTimeout:  5 * time.Second,
 	}
+
+	go func() {
+		if err := httpSrv.ListenAndServe(); err != nil {
+			log.Fatal("Cannot start server", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	<-quit
+
+	slog.Info("Shutting down server...")
+	if err := httpSrv.Shutdown(context.Background()); err != nil {
+		slog.Error("error occured on server shutting down", err)
+	}
+
+	if err := db.Close(); err != nil {
+		slog.Error("error occured on db closing", err)
+	}
+
 }
