@@ -19,6 +19,7 @@ type UpdateConsultationRequest struct {
 	Classroom   string `json:"classroom"`
 	Link        string `json:"link,omitempty"`
 	Limit       int    `json:"limit,omitempty"`
+	Draft       bool   `json:"draft"`
 }
 
 func NewUpdateConsultationRequest(r *http.Request) (*UpdateConsultationRequest, error) {

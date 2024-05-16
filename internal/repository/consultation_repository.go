@@ -311,7 +311,7 @@ func (r *ConsultationRepository) DeleteConsultation(ctx context.Context, consult
 }
 
 func (r *ConsultationRepository) UpdateConsultation(ctx context.Context, consultation *models.Consultation, consultationID string) error {
-	query := "UPDATE consultations SET title = $1, description = $2, consultation_format = $3, consultation_type = $4, consultation_date = $5, campus = $6, classroom = $7, students_limit = $8, link = $9, consultation_time = $10 WHERE id = $11"
+	query := "UPDATE consultations SET title = $1, description = $2, consultation_format = $3, consultation_type = $4, consultation_date = $5, campus = $6, classroom = $7, students_limit = $8, link = $9, consultation_time = $10, draft = $11 WHERE id = $12"
 
 	_, err := r.db.ExecContext(
 		ctx,
@@ -326,6 +326,7 @@ func (r *ConsultationRepository) UpdateConsultation(ctx context.Context, consult
 		consultation.Limit,
 		consultation.Link,
 		consultation.Time,
+		consultation.Draft,
 		consultationID,
 	)
 	if err != nil {

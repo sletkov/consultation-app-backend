@@ -49,6 +49,7 @@ func (c *Controller) UpdateConsultation(w http.ResponseWriter, r *http.Request) 
 		Classroom:   req.Classroom,
 		Link:        req.Link,
 		Limit:       req.Limit,
+		Draft:       req.Draft,
 	}
 
 	fmt.Println("req:", req)
