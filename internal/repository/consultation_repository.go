@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/lib/pq"
 	"github.com/sletkov/consultation-app-backend/internal/models"
+	"time"
 )
 
 type ConsultationRepository struct {
@@ -23,9 +24,10 @@ func NewConsultationRepository(db *sql.DB) *ConsultationRepository {
 func (r *ConsultationRepository) GetAll(ctx context.Context) ([]*models.Consultation, error) {
 	var consultations []*models.Consultation
 
-	query := "SELECT * FROM consultations WHERE draft = false"
+	actualDate := time.Now().Format("2006-01-02")
+	query := "SELECT * FROM consultations WHERE draft = false AND consultation_date >= $1"
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query, actualDate)
 	if err != nil {
 		return nil, err
 	}
@@ -161,10 +163,10 @@ func (r *ConsultationRepository) GetTeacherConsultationsIDs(ctx context.Context,
 
 func (r *ConsultationRepository) GetUserConsultations(ctx context.Context, consultationsIDs []string) ([]*models.Consultation, error) {
 	consultations := make([]*models.Consultation, 0)
+	actualDate := time.Now().Format("2006-01-02")
+	query := "SELECT * FROM consultations WHERE id = ANY($1) AND consultation_date >= $2"
 
-	query := "SELECT * FROM consultations WHERE id = ANY($1)"
-
-	rows, err := r.db.QueryContext(ctx, query, pq.Array(consultationsIDs))
+	rows, err := r.db.QueryContext(ctx, query, pq.Array(consultationsIDs), actualDate)
 	if err != nil {
 		return nil, err
 	}

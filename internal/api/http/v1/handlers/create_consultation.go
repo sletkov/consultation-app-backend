@@ -5,7 +5,7 @@ import (
 	"github.com/sletkov/consultation-app-backend/internal/api/http/v1/requests"
 	"github.com/sletkov/consultation-app-backend/internal/api/http/v1/utils"
 	"github.com/sletkov/consultation-app-backend/internal/models"
-	"log/slog"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -15,8 +15,8 @@ func (c *Controller) CreateConsultation(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		return
 	}
-
-	fmt.Println("req:", req)
+	zap.L().Info("[CreateConsultation] got request", zap.Any("req", req))
+	//fmt.Println("req:", req)
 
 	consultation := &models.Consultation{
 		Title:         req.Title,
@@ -39,12 +39,15 @@ func (c *Controller) CreateConsultation(w http.ResponseWriter, r *http.Request) 
 
 	id, err := c.consultationService.CreateConsultation(r.Context(), consultation, req.TeacherID)
 
+	// Если при создании консультации произошла ошибка, логируем ошибку и возвращаем клиенту ответ с ошибкой
 	if err != nil {
-		slog.Log(r.Context(), slog.LevelError, "failed create consultation", err)
+		zap.L().Error("failed create consultation", zap.Error(err))
 		utils.ErrRespond(w, r, http.StatusInternalServerError, err)
 
 		return
 	}
 
+	// Если консультация создана успешно, логируем успешное создание и возвращаем клиенту ответ
+	zap.L().Info("[CreateConsultation] Success to create consultation")
 	utils.Respond(w, r, http.StatusOK, id)
 }
