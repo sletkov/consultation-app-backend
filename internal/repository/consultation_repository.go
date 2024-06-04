@@ -25,7 +25,7 @@ func (r *ConsultationRepository) GetAll(ctx context.Context) ([]*models.Consulta
 	var consultations []*models.Consultation
 
 	actualDate := time.Now().Format("2006-01-02")
-	query := "SELECT * FROM consultations WHERE draft = false AND consultation_date >= $1"
+	query := "SELECT * FROM consultations WHERE draft = false AND consultation_date >= $1 ORDER BY consultation_date, consultation_time"
 
 	rows, err := r.db.QueryContext(ctx, query, actualDate)
 	if err != nil {
@@ -164,7 +164,7 @@ func (r *ConsultationRepository) GetTeacherConsultationsIDs(ctx context.Context,
 func (r *ConsultationRepository) GetUserConsultations(ctx context.Context, consultationsIDs []string) ([]*models.Consultation, error) {
 	consultations := make([]*models.Consultation, 0)
 	actualDate := time.Now().Format("2006-01-02")
-	query := "SELECT * FROM consultations WHERE id = ANY($1) AND consultation_date >= $2"
+	query := "SELECT * FROM consultations WHERE id = ANY($1) AND consultation_date >= $2 ORDER BY consultation_date, consultation_time"
 
 	rows, err := r.db.QueryContext(ctx, query, pq.Array(consultationsIDs), actualDate)
 	if err != nil {
@@ -382,4 +382,39 @@ func (r *ConsultationRepository) GetStudentsByConsultationID(ctx context.Context
 	fmt.Println("students", students)
 
 	return students, nil
+}
+
+func (r *ConsultationRepository) GetTeacherByConsultationID(ctx context.Context, consultationID string) (*models.User, error) {
+	teacher := &models.User{}
+	query1 := "SELECT * FROM teachers_consultations WHERE consultation_id = $1"
+
+	if err := r.db.QueryRowContext(ctx,
+		query1,
+		consultationID,
+	).Scan(&teacher.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New(fmt.Sprintf("No teacher with consultation_id: %s", consultationID))
+		}
+	}
+
+	query2 := "SELECT * FROM users WHERE id = $1"
+	err := r.db.QueryRowContext(
+		ctx,
+		query2,
+		teacher.ID,
+	).Scan(
+		&teacher.ID,
+		&teacher.FullName,
+		&teacher.Role,
+		&teacher.Email,
+		&teacher.EncryptedPassword,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	teacher.RemoveSensitiveFields()
+
+	return teacher, nil
 }

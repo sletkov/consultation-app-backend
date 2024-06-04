@@ -9,6 +9,7 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	_ "github.com/lib/pq"
 	"github.com/pressly/goose/v3"
+	"github.com/sletkov/consultation-app-backend/internal/emailnotifier"
 	"os/signal"
 	"syscall"
 	"time"
@@ -61,15 +62,17 @@ func main() {
 	userRepository := repository.NewUserRepository(db)
 	consultationRepository := repository.NewConsultationRepository(db)
 
+	emailNotifier := emailnotifier.New(&cfg)
+
 	sessionStore := sessions.NewCookieStore([]byte(cfg.SessionKey))
 	userService := service.NewUserService(userRepository)
-	consultationsService := service.NewConsultationService(consultationRepository)
+	consultationsService := service.NewConsultationService(consultationRepository, emailNotifier)
 
 	controller := handlers.NewV1Controller(userService, consultationsService, sessionStore)
 	router := controller.InitRoutes()
 
 	httpSrv := &http.Server{
-		Addr:         net.JoinHostPort(cfg.Host, cfg.Port),
+		Addr:         net.JoinHostPort(cfg.ServerHost, cfg.ServerPort),
 		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,

@@ -18,15 +18,22 @@ type ConsultationRepository interface {
 	DeleteConsultation(ctx context.Context, consultationID string) error
 	UpdateConsultation(ctx context.Context, consultation *models.Consultation, consultationID string) error
 	GetStudentsByConsultationID(ctx context.Context, consultationID string) ([]*models.User, error)
+	GetTeacherByConsultationID(ctx context.Context, consultationID string) (*models.User, error)
+}
+
+type EmailNotifier interface {
+	NotifyStudentSignup(email string, consultation *models.Consultation, student *models.User) error
 }
 
 type ConsultationService struct {
 	consultationRepository ConsultationRepository
+	notifier               EmailNotifier
 }
 
-func NewConsultationService(consultationRepository ConsultationRepository) *ConsultationService {
+func NewConsultationService(consultationRepository ConsultationRepository, notifier EmailNotifier) *ConsultationService {
 	return &ConsultationService{
 		consultationRepository,
+		notifier,
 	}
 }
 
@@ -78,7 +85,21 @@ func (service *ConsultationService) SignupConsultation(ctx context.Context, stud
 		return err
 	}
 
-	return service.consultationRepository.SignupConsultation(ctx, student, consultation)
+	err = service.consultationRepository.SignupConsultation(ctx, student, consultation)
+	if err != nil {
+		return err
+	}
+
+	teacher, err := service.consultationRepository.GetTeacherByConsultationID(ctx, consultationID)
+	if err != nil {
+		return err
+	}
+
+	if err := service.notifier.NotifyStudentSignup(teacher.Email, consultation, student); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (service *ConsultationService) DeleteConsultation(ctx context.Context, consultationID string) error {

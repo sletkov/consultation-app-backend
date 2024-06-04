@@ -20,6 +20,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 func (r *UserRepository) SaveUser(ctx context.Context, u *models.User) error {
 	query := "INSERT INTO users (id, fullname, role, email, password) VALUES($1,$2,$3,$4,$5)"
 
+	//Если во время выполения запроса к базе данных возникла ошибка, возвращаем ошибку
 	_, err := r.db.ExecContext(ctx, query, u.ID, u.FullName, u.Role, u.Email, u.EncryptedPassword)
 	if err != nil {
 		return err
